@@ -5,5 +5,8 @@ Simple C utility for viewing basic Linux process information such as name, state
 ```shell
 gcc PID_view.c -o pid-view
 ```
-
+## Run
+```shell
+./pid-view PID
+```
 
