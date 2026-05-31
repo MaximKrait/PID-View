@@ -6,10 +6,10 @@
 
 struct inspector_ram_2v
 {
-    char name[16]; // Process name buffer
-    int priority;  // Process priority value
-    char state[2]; // Process state character + null terminator
-    __pid_t pid;   // Process ID
+    char name[16];   // Process name buffer
+    int priority;    // Process priority value
+    char state[256]; // Process state character + null terminator
+    __pid_t pid;     // Process ID
 };
 
 int main(int argv, char *args[])
