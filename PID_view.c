@@ -32,7 +32,7 @@ int main(int argv, char *args[])
     }
 
     // Buffer for reading file lines
-    char line[256];
+    char line[70];
 
     // Read file line by line
     while (fgets(line, sizeof(line), file))
@@ -56,7 +56,7 @@ int main(int argv, char *args[])
     printf("Name process: %s\n", process.name);
     printf("State: %c\n", process.state);
     printf("priority process: %d\n", process.priority);
-    printf("Program version 0.1");
+    printf("Program version 0.1\n");
 
     // close file
     fclose(file);
