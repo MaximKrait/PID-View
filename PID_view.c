@@ -6,10 +6,10 @@
 
 struct inspector_ram_2v
 {
-    char name[16];   // Process name buffer
-    int priority;    // Process priority value
-    char state[256]; // Process state character + null terminator
-    __pid_t pid;     // Process ID
+    char name[16]; // Process name buffer
+    int priority;  // Process priority value
+    char state;    // Process state character
+    __pid_t pid;   // Process ID
 };
 
 int main(int argv, char *args[])
@@ -23,7 +23,7 @@ int main(int argv, char *args[])
     char filepath[64];
     snprintf(filepath, sizeof(filepath), "/proc/%d/status", process.pid);
 
-    // Open the status file for reading
+    // Open the status file for readings
     FILE *file = fopen(filepath, "r");
     if (!file)
     {
@@ -45,18 +45,18 @@ int main(int argv, char *args[])
         else if (strncmp(line, "State:", 6) == 0)
         {
 
-            sscanf(line, "State:\t%c", &process.state[0]);
-            process.state[1] = '\0';
+            sscanf(line, "State:\t%c", &process.state);
         }
     }
 
     // Get process priority using system call
-    int priority = getpriority(PRIO_PROCESS, process.pid);
+    process.priority = getpriority(PRIO_PROCESS, process.pid);
 
     // Print extracted process information
     printf("Name process: %s\n", process.name);
-    printf("State: %s\n", process.state);
-    printf("priority process: %d\n", priority);
+    printf("State: %c\n", process.state);
+    printf("priority process: %d\n", process.priority);
+    printf("Program version 0.1");
 
     // close file
     fclose(file);
