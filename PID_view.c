@@ -41,6 +41,8 @@ int main(int argv, char *args[])
     if (line == NULL)
     {
         printf("memory error");
+        free(filepath);
+        fclose(file);
         return 0;
     }
 
