@@ -3,6 +3,7 @@
 #include <sys/resource.h>
 #include <string.h>
 #include <stdlib.h>
+#include "functions.h"
 
 struct process_in_ram
 {
@@ -10,6 +11,7 @@ struct process_in_ram
     int priority;  // Process priority value
     char state;    // Process state character
     __pid_t pid;   // Process ID
+    int ppid;
 };
 
 int main(int argv, char *args[])
@@ -37,7 +39,8 @@ int main(int argv, char *args[])
     }
 
     // Buffer for reading file lines
-    char *line = malloc(70);
+    int size = 70;
+    char *line = malloc(size);
     if (line == NULL)
     {
         printf("memory error");
@@ -47,7 +50,7 @@ int main(int argv, char *args[])
     }
 
     // Read file line by line
-    while (fgets(line, 70, file))
+    while (fgets(line, size, file))
     {
         if (strncmp(line, "Name:", 5) == 0)
         {
@@ -59,16 +62,19 @@ int main(int argv, char *args[])
 
             sscanf(line, "State:\t%c", &process.state);
         }
+        else if (strncmp(line, "PPid:", 5) == 0) {
+             sscanf(line, "PPid:\t%d", &process.ppid);
+        }
     }
 
     // Get process priority using system call
     process.priority = getpriority(PRIO_PROCESS, process.pid);
-
     // Print extracted process information
     printf("Name process: %s\n", process.name);
     printf("State: %c\n", process.state);
     printf("priority process: %d\n", process.priority);
     printf("Program version 0.1\n");
+    printf("PPid process: %d\n", (int)process.ppid);
     free(filepath);
     free(line);
 
