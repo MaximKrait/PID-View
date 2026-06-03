@@ -73,7 +73,7 @@ int main(int argv, char *args[])
     printf("Name process: %s\n", process.name);
     printf("State: %c\n", process.state);
     printf("priority process: %d\n", process.priority);
-    printf("Program version 0.1\n");
+    printf("Program version 0.2\n");
     printf("PPid process: %d\n", (int)process.ppid);
     free(filepath);
     free(line);
