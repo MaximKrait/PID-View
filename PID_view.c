@@ -3,7 +3,6 @@
 #include <sys/resource.h>
 #include <string.h>
 #include <stdlib.h>
-#include "functions.h"
 
 struct process_in_ram
 {
@@ -11,7 +10,7 @@ struct process_in_ram
     int priority;  // Process priority value
     char state;    // Process state character
     __pid_t pid;   // Process ID
-    int ppid;
+    int ppid;      // Parent Process ID
 };
 
 int main(int argv, char *args[])
@@ -25,36 +24,38 @@ int main(int argv, char *args[])
     char *filepath = malloc(32);
     if (filepath == NULL)
     {
-        printf("memory error");
+        fprintf(stderr, "memory error");
         return 0;
     }
+
+    // Format the path to the process status file
     snprintf(filepath, 32, "/proc/%d/status", process.pid);
 
     // Open the status file for readings
     FILE *file = fopen(filepath, "r");
     if (!file)
     {
-        printf("File not opened!");
+        fprintf(stderr, "Process not found");
         return 1;
     }
 
     // Buffer for reading file lines
-    int size = 70;
+    size_t size = 70;
     char *line = malloc(size);
     if (line == NULL)
     {
-        printf("memory error");
+        fprintf(stderr, "memory error");
         free(filepath);
         fclose(file);
         return 0;
     }
 
-    // Read file line by line
-    while (fgets(line, size, file))
+    // Read file line by line using getline
+    ssize_t chars_read;
+    while ((chars_read = getline(&line, &size, file)) != -1)
     {
         if (strncmp(line, "Name:", 5) == 0)
         {
-
             sscanf(line, "Name:\t%15s", process.name);
         }
         else if (strncmp(line, "State:", 6) == 0)
@@ -62,8 +63,9 @@ int main(int argv, char *args[])
 
             sscanf(line, "State:\t%c", &process.state);
         }
-        else if (strncmp(line, "PPid:", 5) == 0) {
-             sscanf(line, "PPid:\t%d", &process.ppid);
+        else if (strncmp(line, "PPid:", 5) == 0)
+        {
+            sscanf(line, "PPid:\t%d", &process.ppid);
         }
     }
 
@@ -73,12 +75,15 @@ int main(int argv, char *args[])
     printf("Name process: %s\n", process.name);
     printf("State: %c\n", process.state);
     printf("priority process: %d\n", process.priority);
+    if (process.ppid != 0)
+    {
+        printf("PPid process: %d\n", (int)process.ppid);
+    }
     printf("Program version 0.2\n");
-    printf("PPid process: %d\n", (int)process.ppid);
+
+    // close file and clean memory
     free(filepath);
     free(line);
-
-    // close file
     fclose(file);
     return 0;
 }
