@@ -3,6 +3,7 @@
 #include <sys/resource.h>
 #include <string.h>
 #include <stdlib.h>
+#include <errno.h>
 
 struct process_in_ram
 {
@@ -17,6 +18,11 @@ int main(int argv, char *args[])
 {
     struct process_in_ram process;
 
+    if (args[1] == 0)
+    {
+        fprintf(stderr, "No PID!");
+        return 1;
+    }
     // Convert command line argument to PID integer
     process.pid = atoi(args[1]);
 
@@ -25,7 +31,8 @@ int main(int argv, char *args[])
     if (filepath == NULL)
     {
         fprintf(stderr, "memory error");
-        return 0;
+        return 1;
+        free(filepath);
     }
 
     // Format the path to the process status file
@@ -68,13 +75,24 @@ int main(int argv, char *args[])
             sscanf(line, "PPid:\t%d", &process.ppid);
         }
     }
-
-    // Get process priority using system call
-    process.priority = getpriority(PRIO_PROCESS, process.pid);
+    errno = 0;
     // Print extracted process information
     printf("Name process: %s\n", process.name);
     printf("State: %c\n", process.state);
-    printf("priority process: %d\n", process.priority);
+    // Get process priority using system call
+    process.priority = getpriority(PRIO_PROCESS, process.pid);
+
+    if (process.priority == -1)
+    {
+        if (errno != 0)
+        {
+            fprintf(stderr, "Error getting priority process");
+        }
+        else
+        {
+            printf("priority process: %d\n", process.priority);
+        }
+    }
     if (process.ppid != 0)
     {
         printf("PPid process: %d\n", (int)process.ppid);
