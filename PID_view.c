@@ -97,7 +97,7 @@ int main(int argv, char *args[])
     {
         printf("PPid process: %d\n", (int)process.ppid);
     }
-    printf("Program version 0.2\n");
+    printf("Program version 0.3\n");
 
     // close file and clean memory
     free(filepath);
