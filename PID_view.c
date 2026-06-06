@@ -31,8 +31,8 @@ int main(int argv, char *args[])
     if (filepath == NULL)
     {
         fprintf(stderr, "memory error");
-        return 1;
         free(filepath);
+        return 1;
     }
 
     // Format the path to the process status file
@@ -54,7 +54,7 @@ int main(int argv, char *args[])
         fprintf(stderr, "memory error");
         free(filepath);
         fclose(file);
-        return 0;
+        return 1;
     }
 
     // Read file line by line using getline
@@ -87,12 +87,10 @@ int main(int argv, char *args[])
         if (errno != 0)
         {
             fprintf(stderr, "Error getting priority process");
-        }
-        else
-        {
-            printf("priority process: %d\n", process.priority);
+            return 1;
         }
     }
+    printf("priority process: %d\n", process.priority);
     if (process.ppid != 0)
     {
         printf("PPid process: %d\n", (int)process.ppid);
