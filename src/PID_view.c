@@ -7,6 +7,7 @@
 #include <fcntl.h>
 #include <sys/types.h>
 #include <pwd.h>
+#include <time.h>
 
 struct process_in_ram {
     char name[16];
@@ -16,6 +17,9 @@ struct process_in_ram {
     int ppid;
     int threads;
     char uid_name[32];
+    long vmem_mb;
+    long rss_mb;
+    long uptime_sec;
 };
 
 void parse_proc_status(const char *buffer, struct process_in_ram *proc) {
@@ -41,13 +45,61 @@ void parse_proc_status(const char *buffer, struct process_in_ram *proc) {
 
     if (raw_uid != -1) {
         struct passwd *pw = getpwuid(raw_uid);
-        if (pw) {
-            strncpy(proc->uid_name, pw->pw_name, sizeof(proc->uid_name) - 1);
-        } else {
-            snprintf(proc->uid_name, sizeof(proc->uid_name), "%d", raw_uid);
-        }
+        if (pw) strncpy(proc->uid_name, pw->pw_name, sizeof(proc->uid_name) - 1);
+        else snprintf(proc->uid_name, sizeof(proc->uid_name), "%d", raw_uid);
     } else {
         strcpy(proc->uid_name, "unknown");
+    }
+}
+
+void parse_advanced_metrics(struct process_in_ram *proc) {
+    char path[32];
+    char buf[512];
+    int fd;
+    ssize_t n;
+
+    long page_size = sysconf(_SC_PAGESIZE);
+    long clock_ticks = sysconf(_SC_CLK_TCK);
+
+    snprintf(path, sizeof(path), "/proc/%d/statm", proc->pid);
+    if ((fd = open(path, O_RDONLY)) >= 0) {
+        if ((n = read(fd, buf, sizeof(buf) - 1)) > 0) {
+            buf[n] = '\0';
+            long vmem_pages = 0, rss_pages = 0;
+            sscanf(buf, "%ld %ld", &vmem_pages, &rss_pages);
+            proc->vmem_mb = (vmem_pages * page_size) / (1024 * 1024);
+            proc->rss_mb = (rss_pages * page_size) / (1024 * 1024);
+        }
+        close(fd);
+    }
+
+    double uptime_sys = 0.0;
+    if ((fd = open("/proc/uptime", O_RDONLY)) >= 0) {
+        if ((n = read(fd, buf, sizeof(buf) - 1)) > 0) {
+            buf[n] = '\0';
+            sscanf(buf, "%lf", &uptime_sys);
+        }
+        close(fd);
+    }
+
+    snprintf(path, sizeof(path), "/proc/%d/stat", proc->pid);
+    if ((fd = open(path, O_RDONLY)) >= 0) {
+        if ((n = read(fd, buf, sizeof(buf) - 1)) > 0) {
+            buf[n] = '\0';
+            
+            const char *p = strrchr(buf, ')');
+            if (p) {
+                p += 2;
+                long unsigned starttime = 0;
+                int scanned = sscanf(p, "%*c %*d %*d %*d %*d %*d %*u %*u %*u %*u %*u %*u %*u %*d %*d %*d %*d %*d %*d %lu", &starttime);
+                if (scanned == 1) {
+                    double process_start_sec = (double)starttime / clock_ticks;
+                    proc->uptime_sec = (long)(uptime_sys - process_start_sec);
+                    if (proc->uptime_sec < 0) proc->uptime_sec = 0;
+                }
+            }
+        }
+        close(fd);
     }
 }
 
@@ -80,25 +132,25 @@ int main(int argv, char *args[]) {
     buffer[bytes_read] = '\0';
 
     parse_proc_status(buffer, &process);
+    parse_advanced_metrics(&process);
+
+    long h = process.uptime_sec / 3600;
+    long m = (process.uptime_sec % 3600) / 60;
+    long s = process.uptime_sec % 60;
 
     printf("=== PID-View v0.4 ===\n");
     printf("PID:          %d\n", process.pid);
     printf("Name:         %s\n", process.name);
     printf("Owner:        %s\n", process.uid_name);
     printf("State:        %c\n", process.state);
-
-    errno = 0;
-    process.priority = getpriority(PRIO_PROCESS, process.pid);
-    if (process.priority == -1 && errno != 0) {
-        fprintf(stderr, "Error getting priority process\n");
-        return 1;
-    }
-
     printf("Priority:     %d\n", process.priority);
     if (process.ppid != 0) {
         printf("Parent PID:   %d\n", process.ppid);
     }
     printf("Threads:      %d\n", process.threads);
+    printf("Virtual Mem:  %ld MB\n", process.vmem_mb);
+    printf("Physical Mem: %ld MB (RSS)\n", process.rss_mb);
+    printf("Running Time: %02ld:%02ld:%02ld\n", h, m, s);
     printf("=====================\n");
     
     return 0;
