@@ -28,7 +28,7 @@ void parse_proc_status(const char *buffer, struct process_in_ram *proc) {
 
     while (*line) {
         if (strncmp(line, "Name:", 5) == 0) {
-            sscanf(line, "Name:\t%15s", proc->name);
+            sscanf(line, "Name:\t%15[^\n]", proc->name);
         } else if (strncmp(line, "State:", 6) == 0) {
             sscanf(line, "State:\t%c", &proc->state);
         } else if (strncmp(line, "PPid:", 5) == 0) {
