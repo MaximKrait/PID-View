@@ -144,7 +144,7 @@ int main(int argv, char *args[]) {
     printf("Name:         %s\n", process.name);
     printf("Owner:        %s\n", process.uid_name);
     printf("State:        %c\n", process.state);
-    printf("Priority:     %d\n", process.priority);
+    printf("Priority:     %d\n", process.priority - 20);
     if (process.ppid != 0) {
         printf("Parent PID:   %d\n", process.ppid);
     }
