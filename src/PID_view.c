@@ -91,8 +91,9 @@ void parse_advanced_metrics(struct process_in_ram *proc) {
             if (p) {
                 p += 2;
                 long unsigned starttime = 0;
-                int scanned = sscanf(p, "%*c %*d %*d %*d %*d %*d %*u %*u %*u %*u %*u %*u %*u %*d %*d %*d %*d %*d %*d %lu", &starttime);
-                if (scanned == 1) {
+                int scanned = sscanf(p, "%*c %*d %*d %*d %*d %*d %*u %*u %*u %*u %*u %*u %*u %*d %*d %d %*d %*d %*d %lu", 
+                                     &proc->priority, &starttime);
+                if (scanned == 2) {
                     double process_start_sec = (double)starttime / clock_ticks;
                     proc->uptime_sec = (long)(uptime_sys - process_start_sec);
                     if (proc->uptime_sec < 0) proc->uptime_sec = 0;
